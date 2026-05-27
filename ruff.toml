@@ -56,3 +56,9 @@ ignore = [
 "app/cli/interactive_shell/routing/handle_message_with_agent/orchestration/action_executor/synthetic_tasks.py" = ["SIM115"]
 "app/cli/interactive_shell/routing/handle_message_with_agent/orchestration/action_executor/background_tasks.py" = ["SIM115"]
 
+# NamedTemporaryFile is opened with delete=False to reserve a path for a subprocess
+# to write to. The handle must be explicitly closed before the subprocess runs so
+# the file is accessible on all platforms (Windows locks open files). A with-block
+# would close it at the wrong scope — after the subprocess, not before it.
+"app/cli/interactive_shell/command_registry/cli_parity.py" = ["SIM115"]
+
