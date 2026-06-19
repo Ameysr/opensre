@@ -11,6 +11,20 @@ session:
   # Pin an empty resolved store so the pasted blob hands off and the gather loop
   # has no tools regardless of the developer's local ~/.opensre integrations.
   resolved_integrations: {}
+available_capabilities:
+  # Intentional surface constraint (not boilerplate): the pasted meta-text quotes
+  # an example command ('switch my model to gpt-5.5'). With the action-command
+  # surfaces enabled (the production default), the live assistant is baited into
+  # actuating that quoted EXAMPLE as a real provider switch (switch_llm_provider /
+  # /model set), which mutates .env and breaks the non-actionable contract. The
+  # turn correctly hands off, but the conversational answer surface would still
+  # run the switch. Pinning the action surfaces off keeps this scenario focused on
+  # what it verifies -- pasted assistant-style meta-content is answered
+  # conversationally, never actuated. synthetic_suites is left enabled (omitted),
+  # so this is not an all-disabled boilerplate block.
+  slash_commands: []
+  cli_commands: []
+  llm_provider: []
 notes:
 - Prompt reads like the assistant offering a code change; nothing to execute.
 

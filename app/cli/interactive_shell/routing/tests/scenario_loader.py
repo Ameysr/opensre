@@ -94,6 +94,7 @@ class ScenarioCapabilities:
     slash_commands: tuple[str, ...] | None
     cli_commands: tuple[str, ...] | None
     synthetic_suites: tuple[str, ...] | None
+    llm_provider: tuple[str, ...] | None
 
 
 @dataclass(frozen=True)
@@ -473,6 +474,10 @@ def _parse_scenario_yaml(
             synthetic_suites=_optional_string_list(
                 capabilities_raw.get("synthetic_suites"),
                 label=f"{scenario_path} synthetic_suites",
+            ),
+            llm_provider=_optional_string_list(
+                capabilities_raw.get("llm_provider"),
+                label=f"{scenario_path} llm_provider",
             ),
         ),
         notes=_string_list(data.get("notes"), label=f"{scenario_path} notes"),

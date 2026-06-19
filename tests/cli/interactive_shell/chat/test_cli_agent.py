@@ -447,6 +447,39 @@ class TestAssistantOutputRendering:
         assert "LLM_PROVIDER=anthropic" in (tmp_path / ".env").read_text(encoding="utf-8")
         assert session.history[-1] == {"type": "slash", "text": "/model set anthropic", "ok": True}
 
+    def test_provider_switch_blocked_when_llm_provider_capability_disabled(
+        self,
+        monkeypatch: Any,
+        tmp_path: Any,
+    ) -> None:
+        """A session that explicitly disables the ``llm_provider`` surface must
+        not actuate a switch_llm_provider action from the chat answer path.
+
+        This is the deterministic guard behind scenario 700: pasted meta-text
+        that quotes an example command (``switch my model to gpt-5.5``) can bait
+        the assistant into emitting a provider-switch action. When the surface is
+        pinned off, the action is dropped before execution -- no ``/model set``
+        runs, no ``.env`` write, and no ``slash`` history entry is recorded."""
+        _patch_llm(
+            monkeypatch,
+            '{"actions":[{"action":"switch_llm_provider","provider":"openai","model":"gpt-5.5"}]}',
+        )
+
+        import app.cli.wizard.env_sync as env_sync
+
+        env_path = tmp_path / ".env"
+        monkeypatch.setattr(env_sync, "PROJECT_ENV_PATH", env_path)
+
+        session = ReplSession(available_capabilities={"llm_provider": ()})
+        console, buf = _capture()
+        answer_cli_agent("switch my model to gpt-5.5", session, console)
+
+        output = _strip_ansi(buf.getvalue())
+        assert "$ /model set" not in output
+        assert "switched LLM provider" not in output
+        assert not env_path.exists()
+        assert all(entry.get("type") != "slash" for entry in session.history)
+
     def test_prose_wrapped_provider_only_action_is_executed(
         self,
         monkeypatch: Any,

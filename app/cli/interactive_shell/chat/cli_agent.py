@@ -171,6 +171,44 @@ _ALLOWED_SLASH_ACTIONS = frozenset(
 )
 
 
+# Conversational action kinds map onto the same capability gates the action
+# planner uses, so a session that explicitly disables a surface (an
+# ``available_capabilities`` entry set to an empty list) cannot actuate it from
+# the chat answer path either. Production sets no capability constraints, so
+# every action stays allowed there; the gate only bites in tests/scenarios that
+# deliberately pin a surface off. ``switch_*`` map to ``llm_provider`` because
+# they mutate the active provider/model.
+_ACTION_CAPABILITY: dict[str, str] = {
+    "switch_llm_provider": "llm_provider",
+    "switch_toolcall_model": "llm_provider",
+    "slash": "slash_commands",
+    "run_interactive": "slash_commands",
+    "run_cli_command": "cli_commands",
+}
+
+
+def _actions_allowed_by_capabilities(
+    actions: list[dict[str, object]], session: ReplSession
+) -> list[dict[str, object]]:
+    """Drop actions whose capability surface is explicitly disabled for *session*.
+
+    An action kind with no capability mapping is always kept. An action mapped
+    to a capability is kept unless that capability is explicitly disabled (set
+    to ``()``); an absent capability key leaves the action enabled, matching the
+    production default.
+    """
+    from app.cli.interactive_shell.routing.handle_message_with_agent.orchestration.tool_contracts import (
+        capability_not_explicitly_disabled,
+    )
+
+    allowed: list[dict[str, object]] = []
+    for action in actions:
+        capability = _ACTION_CAPABILITY.get(str(action.get("action", "")).strip())
+        if capability is None or capability_not_explicitly_disabled(session, capability):
+            allowed.append(action)
+    return allowed
+
+
 def _opensre_integration_command_blocked(payload: str, session: ReplSession) -> bool:
     """Block integration-management CLI runs when the session has none configured."""
     if not session.configured_integrations_known or session.configured_integrations:
@@ -328,6 +366,13 @@ def _execute_action_plan(
     is_tty: bool | None = None,
 ) -> bool:
     if not actions:
+        return False
+
+    actions = _actions_allowed_by_capabilities(actions, session)
+    if not actions:
+        # Every proposed action targets a surface this session has explicitly
+        # disabled. Fall through so the caller renders the model's text instead
+        # of actuating anything.
         return False
 
     from app.cli.interactive_shell.commands import (

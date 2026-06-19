@@ -9,6 +9,16 @@ from typing import Any
 import pytest
 from rich.console import Console
 
+# Sentinel a fixture's ``resolved_integrations`` uses to request the REAL,
+# live-resolved config for a service instead of a pinned fake one. The oracle
+# replaces ``<service>: "@live"`` with the integration resolved from the local
+# store / env (real credentials) and forces ``connection_verified: true`` so the
+# tool is available. Scenarios that use it pair it with
+# ``gathered_tools_contract.must_return_valid_data`` to assert the tool reached
+# the live integration and returned valid data (not a 401). When the credential
+# cannot be resolved the scenario is skipped, never failed (env gap, not bug).
+LIVE_INTEGRATION_SENTINEL = "@live"
+
 from app.cli.interactive_shell.routing.handle_message_with_agent.orchestration.tool_registry import (
     ACTION_KIND_TO_TOOL,
     REGISTRY,
@@ -106,6 +116,7 @@ def session_capabilities(capabilities: ScenarioCapabilities) -> dict[str, tuple[
         ("slash_commands", capabilities.slash_commands),
         ("cli_commands", capabilities.cli_commands),
         ("synthetic_suites", capabilities.synthetic_suites),
+        ("llm_provider", capabilities.llm_provider),
     ):
         if value is not None:
             projected[key] = value

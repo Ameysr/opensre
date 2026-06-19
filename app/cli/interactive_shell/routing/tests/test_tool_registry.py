@@ -125,6 +125,7 @@ def test_tools_hidden_when_capabilities_are_explicitly_empty() -> None:
             "synthetic_suites": (),
             "shell_commands": (),
             "implementation": (),
+            "llm_provider": (),
         }
     )
     names = {spec["name"] for spec in REGISTRY.tool_specs_for_llm(session)}
@@ -133,6 +134,14 @@ def test_tools_hidden_when_capabilities_are_explicitly_empty() -> None:
     assert "synthetic_run" not in names
     assert "shell_run" not in names
     assert "code_implement" not in names
+    assert "llm_set_provider" not in names
+
+
+def test_llm_set_provider_offered_by_default() -> None:
+    """With no capability constraints (the production default), the planner is
+    still offered the provider-switch tool."""
+    names = {spec["name"] for spec in REGISTRY.tool_specs_for_llm(ReplSession())}
+    assert "llm_set_provider" in names
 
 
 def test_registry_dispatch_blocks_unavailable_tool() -> None:
