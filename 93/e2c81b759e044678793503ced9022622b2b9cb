@@ -1,0 +1,19 @@
+tests/cli/wizard/test_store.py
+  s_60db3223722b24::t_7966b01971c328 14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "93e2c81b759e044678793503ced9022622b2b9cb",
+  "prompts": {},
+  "sessions": {
+    "s_60db3223722b24": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_105bc26faffeH5MomDPuIMzZQu",
+        "model": "unknown"
+      },
+      "human_author": "Amey Ranaware <ranaware.amey@gmail.com>"
+    }
+  }
+}
